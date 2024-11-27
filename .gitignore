@@ -1,0 +1,44 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+/.vs
+bin/pressuresand.pdb
+bin/pressuresand
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+/out
+bin/pressuresand.ilk
+bin/mathgraph.ilk
+bin/mathgraph.pdb

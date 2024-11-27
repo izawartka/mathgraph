@@ -1,0 +1,3 @@
+[submodule "src/rzuf3"]
+	path = src/rzuf3
+	url = https://github.com/izawartka/rzuf3

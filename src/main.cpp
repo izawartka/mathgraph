@@ -10,7 +10,8 @@ int main(int argc, char* argv[]) {
     spdlog::set_level(spdlog::level::debug);
 
     game = new RZUF3_Game();
-    game->loadLanguage("assets/lang_pl.txt");
+    game->addConfigFile(g_defaultConfigDef);
+    game->loadLanguageFromConfigFile("assets/", "lang");
     game->initWindow(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT, false);
     game->setWindowTitle("window_title", true);
     /// game->setWindowIcon("assets/icon.png");

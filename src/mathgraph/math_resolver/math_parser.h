@@ -17,8 +17,9 @@ private:
 	static bool parseSpecial(std::string strExpression, MathExpression& outExpression, MathError& error, MathOperand& outOperand);
 
 	static int findNextNonSpaceCharIndex(std::string str, int start);
-	static int findFunctionName(std::string str, MathOperationType *foundOperationType = nullptr, int *foundOperationNameSize = 0);
+	static int findFunctionName(std::string str, const MathFunctionsItem** foundFunction = nullptr);
 	static bool isStringNumber(std::string str);
+	static bool isCharNumber(char c);
 	static int findInnerStringLength(std::string str, int start);
 	static void addSeparationCharToString(std::string& str, int startIndex, int length, char separationChar, bool skipLast = true);
 };

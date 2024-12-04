@@ -335,29 +335,81 @@ bool MathParser::parseSpecial(std::string strExpression, MathExpression& outExpr
 		return parseOperations(innerExpression, outExpression, error, outOperand, 0);
 	}
 
-	MathOperationType operationType;
-	int operationNameSize;
-	int functionNameIndex = findFunctionName(strExpression, &operationType, &operationNameSize);
-	if (functionNameIndex == 0) {
-		std::string innerExpression = strExpression.substr(operationNameSize);
+	const MathFunctionsItem* foundFunction;
+	int functionNameIndex = findFunctionName(strExpression, &foundFunction);
 
-		if (innerExpression[0] == '(' && innerExpression[innerExpression.size() - 1] == ')') {
-			innerExpression = innerExpression.substr(1, innerExpression.size() - 2);
+	if(foundFunction == nullptr || functionNameIndex == -1) {
+		error.type = UNKNOWN_SYMBOL;
+		error.position = 0;
+		return false;
+	}
+
+	int functionNameSize = foundFunction->name.size();
+	bool hasBrackets = strExpression[functionNameSize] == '(' && strExpression[strExpression.size() - 1] == ')';
+	std::string innerText = hasBrackets ? 
+		strExpression.substr(functionNameSize + 1, strExpression.size() - functionNameSize - 2) : 
+		strExpression.substr(functionNameSize);
+	std::vector<std::string> innerExpressions;
+
+	int depth = 0;
+	int currentExpressionStart = 0;
+	for(int i = 0; i < innerText.size(); ++i) {
+		if (innerText[i] == '(') ++depth;
+		else if (innerText[i] == ')') --depth;
+
+		if (depth < 0) {
+			error.type = UNEXPECTED_BRACKET;
+			error.position = i;
+			return false;
 		}
 
+		if (depth == 0 && innerText[i] == ',') {
+			innerExpressions.push_back(innerText.substr(currentExpressionStart, i - currentExpressionStart));
+			currentExpressionStart = i + 1;
+		}
+
+		if (i == innerText.size() - 1) {
+			innerExpressions.push_back(innerText.substr(currentExpressionStart));
+		}
+	}
+
+	if (depth != 0) {
+		error.type = UNCLOSED_BRACKET;
+		error.position = innerText.size();
+		return false;
+	}
+
+	std::vector<MathOperand> operands;
+	for(std::string& innerExpression : innerExpressions) {
 		MathOperand innerOperand;
 		if (!parseOperations(innerExpression, outExpression, error, innerOperand, 0)) return false;
 
-		MathOperation operation = { operationType, { innerOperand } };
-		outExpression.operations.push_back(operation);
-		outOperand = { OP_RESULT, outExpression.operations.size() - 1 };
-		return true;
+		operands.push_back(innerOperand);
 	}
 
-	error.type = UNKNOWN_SYMBOL;
-	error.position = 0;
+	int operandCount = operands.size();
+	if(operandCount > 1 && !hasBrackets) {
+		error.type = BRACKETS_REQUIRED;
+		error.position = functionNameSize;
+		return false;
+	}
 
-	return false;
+	if (foundFunction->minOperands != -1 && operandCount < foundFunction->minOperands) {
+		error.type = NOT_ENOUGH_OPERANDS;
+		error.position = functionNameSize;
+		return false;
+	}
+
+	if (foundFunction->maxOperands != -1 && operandCount > foundFunction->maxOperands) {
+		error.type = TOO_MANY_OPERANDS;
+		error.position = functionNameSize;
+		return false;
+	}
+
+	MathOperation operation = { foundFunction->operation, operands };
+	outExpression.operations.push_back(operation);
+	outOperand = { OP_RESULT, outExpression.operations.size() - 1 };
+	return true;
 }
 
 int MathParser::findNextNonSpaceCharIndex(std::string str, int start)
@@ -369,15 +421,14 @@ int MathParser::findNextNonSpaceCharIndex(std::string str, int start)
 	return str.size();
 }
 
-int MathParser::findFunctionName(std::string str, MathOperationType* foundOperationType, int* foundOperationNameSize)
+int MathParser::findFunctionName(std::string str, const MathFunctionsItem** foundFunction)
 {
 	if (str.size() == 0) return -1;
 
 	for (int i = 0; i < str.size(); ++i) {
 		for (const MathFunctionsItem& item : mathFunctions) {
 			if (str.find(item.name) == i) {
-				if (foundOperationType != nullptr) *foundOperationType = item.operation;
-				if (foundOperationNameSize != nullptr) *foundOperationNameSize = item.name.size();
+				if (foundFunction != nullptr) *foundFunction = &item;
 				return i;
 			}
 		}

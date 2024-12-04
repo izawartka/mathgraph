@@ -54,18 +54,32 @@ bool MathGraph::setExpression(std::string expressionStr)
 
 	MathParser::parseExpression(expressionStr, *expression, *error);
 
-	if (error->type != NO_ERROR)
+	MathErrorType errorType = error->type;
+	if (errorType)
 	{
-		spdlog::warn("Error while parsing expression. Code: {}", (int)error->type);
+		spdlog::warn("Error while parsing expression. Code: {}", (int)errorType);
 		m_error = error;
 		delete expression;
-		return false;
+	}
+	else {
+		spdlog::info("Expression parsed successfully");
+		m_expression = expression;
+		delete error;
+
+		int varCount = m_expression->variables.size();
+		if (varCount > 1 || varCount == 1 && m_expression->variables[0] != "x") {
+			spdlog::warn("Expression has more than one variable or variable is not 'x'");
+			errorType = TOO_MUCH_VARIABLES;
+
+			delete m_expression;
+			m_expression = nullptr;
+		}
 	}
 
-	spdlog::info("Expression parsed successfully");
-	m_expression = expression;
-	delete error;
-	return true;
+	RZUF3_EventsManager* eventsManager = g_scene->getEventsManager();
+	eventsManager->dispatchEvent(new User_MathExpressionErrorEvent(errorType));
+
+	return errorType == NO_ERROR;
 }
 
 void MathGraph::setRect(SDL_Rect rect)
@@ -249,11 +263,6 @@ void MathGraph::updateLineTexture()
 
 	if (m_expression == nullptr) return;
 	if (m_error != nullptr) return;
-	int varCount = m_expression->variables.size();
-	if (varCount > 1 || varCount == 1 && m_expression->variables[0] != "x") {
-		spdlog::warn("Expression has more than one variable or variable is not 'x'");
-		return;
-	}
 
 	double centerX = m_options.rect.w / 2.0;
 	double centerY = m_options.rect.h / 2.0;
@@ -266,6 +275,7 @@ void MathGraph::updateLineTexture()
 	double lastY = 0;
 	bool lastInBounds = false;
 	bool lastOk = false;
+	bool lastIsError = true;
 
 	for (int i = 0; i <= m_options.rect.w; i++)
 	{
@@ -287,7 +297,10 @@ void MathGraph::updateLineTexture()
 		MathError error;
 		MathSolver::solveExpression(*m_expression, { input }, result, error);
 
-		if (error.type != NO_ERROR) continue;
+		if (error.type != NO_ERROR) {
+			lastIsError = true;
+			continue;
+		}
 
 		double x = i;
 		double y = centerY + (m_options.posZoom.y - result) * m_options.posZoom.h;
@@ -297,12 +310,13 @@ void MathGraph::updateLineTexture()
 		bool inBounds = (y >= 0 && y < m_options.rect.h);
 		bool ok = inBounds || lastInBounds;
 
-		if (!lastOk && ok && i != 0) points[pointCount++] = { (int)x-1, (int)lastY };
+		if (!lastOk && ok && !lastIsError) points[pointCount++] = { (int)x-1, (int)lastY };
 		if (ok) points[pointCount++] = { (int)x, (int)y };
 
 		lastY = y;
 		lastInBounds = inBounds;
 		lastOk = ok;
+		lastIsError = false;
 	}
 
 	delete[] points;
@@ -312,22 +326,22 @@ void MathGraph::updateLineTexture()
 void MathGraph::createText()
 {
 	RZUF3_TextRendererOptions options;
-	options.fontFilepath = m_options.textFontFilepath;
 	options.text = "";
 	options.useOnDraw = false;
+	options.useLangFile = false;
 	options.style.bgColor = m_options.bgColor;
 	options.style.color = m_options.markerTextColor;
 	options.style.size = m_options.markerTextSize;
 	options.style.style = m_options.markerTextStyle;
-	options.style.useLangFile = false;
+	options.style.fontFilepath = m_options.textFontFilepath;
 
-	options.style.alignment = RZUF3_Align_Top;
+	options.alignment = RZUF3_Align_Top;
 	if (m_markerTextX == nullptr) {
 		m_markerTextX = new RZUF3_TextRenderer(options);
 		m_object->addScript(m_markerTextX);
 	}
 
-	options.style.alignment = RZUF3_Align_Right;
+	options.alignment = RZUF3_Align_Right;
 	if (m_markerTextY == nullptr) {
 		m_markerTextY = new RZUF3_TextRenderer(options);
 		m_object->addScript(m_markerTextY);

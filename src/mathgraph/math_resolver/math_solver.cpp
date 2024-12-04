@@ -92,8 +92,10 @@ bool MathSolver::solveOperation(MathOperationType operationType, std::vector<dou
 		for(int i = 1; i < operandValues.size(); i++)
 			outResult = pow(outResult, operandValues[i]);
 		break;
+	case ROOT:
+		outResult = pow(operandValues[0], 1 / operandValues[1]);
+		break;
 	case SQRT:
-		/// TODO: non square roots
 		outResult = sqrt(operandValues[0]);
 		break;
 	case SIN:
@@ -108,6 +110,42 @@ bool MathSolver::solveOperation(MathOperationType operationType, std::vector<dou
 	case TG:
 		outResult = tan(operandValues[0]);
 		break;
+	case ASIN:
+		outResult = asin(operandValues[0]);
+		break;
+	case ACOS:
+		outResult = acos(operandValues[0]);
+		break;
+	case ACTG:
+		outResult = atan(1 / operandValues[0]);
+		break;
+	case ATG:
+		outResult = atan(operandValues[0]);
+		break;
+	case SINH:
+		outResult = sinh(operandValues[0]);
+		break;
+	case COSH:
+		outResult = cosh(operandValues[0]);
+		break;
+	case CTGH:
+		outResult = 1 / tanh(operandValues[0]);
+		break;
+	case TGH:
+		outResult = tanh(operandValues[0]);
+		break;
+	case ASINH:
+		outResult = asinh(operandValues[0]);
+		break;
+	case ACOSH:
+		outResult = acosh(operandValues[0]);
+		break;
+	case ACTGH:
+		outResult = atanh(1 / operandValues[0]);
+		break;
+	case ATGH:
+		outResult = atanh(operandValues[0]);
+		break;
 	case ABS:
 		outResult = abs(operandValues[0]);
 		break;
@@ -115,10 +153,24 @@ bool MathSolver::solveOperation(MathOperationType operationType, std::vector<dou
 		outResult = log(operandValues[0]);
 		break;
 	case LOG:
-		outResult = log10(operandValues[0]);
+		if(operandValues.size() == 1) outResult = log10(operandValues[0]);
+		else outResult = log(operandValues[1]) / log(operandValues[0]);
 		break;
 	case EXP:
 		outResult = exp(operandValues[0]);
+		break;
+	case MOD:
+		outResult = fmod(operandValues[0], operandValues[1]);
+		break;
+	case MIN:
+		outResult = operandValues[0];
+		for(auto& operand : operandValues)
+			outResult = std::min(outResult, operand);
+		break;
+	case MAX:
+		outResult = operandValues[0];
+		for(auto& operand : operandValues)
+			outResult = std::max(outResult, operand);
 		break;
 	default:
 		error.type = UNSUPPORTED_OPERATION;

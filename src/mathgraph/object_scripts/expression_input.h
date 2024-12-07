@@ -20,6 +20,6 @@ protected:
 
 	RZUF3_TextInput* m_textInput = nullptr;
 
-	_DECLARE_LISTENER(UIStringValueChange);
+	_DECLARE_LISTENER(UIStringValueChange)
 	_DECLARE_LISTENER(MathExpressionError)
 };

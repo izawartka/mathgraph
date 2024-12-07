@@ -1,2 +1,4 @@
 window_title = MathGraph
 equation_label = y=
+settings = Settings
+settings_back = Back

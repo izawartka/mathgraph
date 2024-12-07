@@ -160,7 +160,9 @@ bool MathSolver::solveOperation(MathOperationType operationType, std::vector<dou
 		outResult = exp(operandValues[0]);
 		break;
 	case MOD:
-		outResult = fmod(operandValues[0], operandValues[1]);
+		outResult = operandValues[0];
+		outResult += -operandValues[1] * floor(operandValues[0] / operandValues[1]);
+		outResult = fmod(outResult, operandValues[1]);
 		break;
 	case MIN:
 		outResult = operandValues[0];

@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     game->loadLanguageFromConfigFile("assets/", "lang");
     game->initWindow(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT, false);
     game->setWindowTitle("window_title", true);
-    /// game->setWindowIcon("assets/icon.png");
+    game->setWindowIcon("assets/icon.png");
     game->setWindowMinimumSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
     game->setWindowResizable(true);
 
@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
 
     delete game;
     MainScene::destroy();
+    SettingsScene::destroy();
 
     return 0;
 }

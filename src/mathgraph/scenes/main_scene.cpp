@@ -1,5 +1,5 @@
 #include "main_scene.h"
-#include "mathgraph.h"
+#include "../mathgraph.h"
 
 RZUF3_SceneDefinition* MainScene::m_sceneDef = nullptr;
 
@@ -13,7 +13,7 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
     // UI root //
     RZUF3_ObjectDefinition objUIRoot;
     objUIRoot.name = "ui_root";
-    m_sceneDef->objects.push_back(objUIRoot);
+    m_sceneDef->objects.push_back(objUIRoot);    
 
     // equation label //
     RZUF3_TextRendererOptions equationLabelOptions;
@@ -64,10 +64,28 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
         new RZUF3_Draggable(graphDraggableOptions),
         new RZUF3_WindowRectAnchor(RZUF3_WindowRectAnchorOptions{{
             {0.0, 0.0, 16, 58},
-            {1.0, 1.0, -16, -50}
+            {1.0, 1.0, -16, -58}
         }})
     };
     m_sceneDef->objects.push_back(objGraph);
+
+    // settings button //
+    RZUF3_TextButtonOptions settingsButtonOptions;
+    settingsButtonOptions.text = "settings";
+    settingsButtonOptions.useLangFile = true;
+    settingsButtonOptions.alignment = RZUF3_Align_BottomLeft;
+    settingsButtonOptions.styles[0].horizontalPadding = 16;
+    settingsButtonOptions.styles[0].textStyle.fontFilepath = "assets/fonts/roboto-regular.ttf";
+
+    RZUF3_ObjectDefinition objSettingsButton;
+    objSettingsButton.name = "settings_button";
+    objSettingsButton.parentName = "ui_root";
+    objSettingsButton.scripts = {
+        new RZUF3_TextButton(settingsButtonOptions),
+        new SceneSwitchButton(SettingsScene::getSceneDef()),
+        new RZUF3_WindowAnchor({0, 1, 16, -16})
+	};
+    m_sceneDef->objects.push_back(objSettingsButton);
 
     // author //
     RZUF3_ObjectDefinition objAuthor;
@@ -81,7 +99,7 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
 
     objAuthor.scripts = {
         new RZUF3_TextRenderer(authorOptions),
-        new RZUF3_WindowAnchor({1, 1, -16, -16})
+        new RZUF3_WindowAnchor({1, 1, -16, -20})
     };
     m_sceneDef->objects.push_back(objAuthor);
 

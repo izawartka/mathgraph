@@ -77,7 +77,8 @@ bool MathGraph::setExpression(std::string expressionStr)
 	}
 
 	RZUF3_EventsManager* eventsManager = g_scene->getEventsManager();
-	eventsManager->dispatchEvent(new User_MathExpressionErrorEvent(errorType));
+	User_MathExpressionErrorEvent errorEvent(errorType);
+	eventsManager->dispatchEvent(&errorEvent);
 
 	return errorType == NO_ERROR;
 }
@@ -279,7 +280,7 @@ void MathGraph::updateLineTexture()
 
 	for (int i = 0; i <= m_options.rect.w; i++)
 	{
-		if (!lastOk || i == m_options.rect.w)
+		if (!lastOk || i >= m_options.rect.w)
 		{
 			if (pointCount > 1)
 			{
@@ -288,14 +289,14 @@ void MathGraph::updateLineTexture()
 
 			pointCount = 0;
 
-			if (i == m_options.rect.w) break;
+			if (i >= m_options.rect.w) break;
 		}
 
 		double input = (i - centerX) / m_options.posZoom.w - m_options.posZoom.x;
 
-		double result;
+		double value;
 		MathError error;
-		MathSolver::solveExpression(*m_expression, { input }, result, error);
+		MathSolver::solveExpression(*m_expression, { input }, value, error);
 
 		if (error.type != NO_ERROR) {
 			lastIsError = true;
@@ -303,7 +304,7 @@ void MathGraph::updateLineTexture()
 		}
 
 		double x = i;
-		double y = centerY + (m_options.posZoom.y - result) * m_options.posZoom.h;
+		double y = centerY + (m_options.posZoom.y - value) * m_options.posZoom.h;
 		if (y < 0) y = -1;
 		if (y >= m_options.rect.h) y = m_options.rect.h;
 

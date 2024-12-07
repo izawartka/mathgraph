@@ -3,7 +3,7 @@
 
 const RZUF3_ConfigFileDef g_defaultConfigDef = {
 	{
-		{"lang", "lang_pl.txt"},
+		{"lang", "lang_en.txt"},
 		{"x_scale", "decimal"},
 		{"y_scale", "decimal"},
 	},

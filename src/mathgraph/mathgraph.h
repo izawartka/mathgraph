@@ -8,6 +8,5 @@
 #include "assets/assets.h"
 #include "events/events.h"
 #include "object_scripts/object_scripts.h"
-
 #include "default_config.h"
-#include "main_scene.h"
+#include "scenes/scenes.h"

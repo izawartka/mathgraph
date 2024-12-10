@@ -16,7 +16,7 @@ void ExpressionInput::init()
 	createTextInput();
 
 	RZUF3_EventsManager* objEventsManager = m_object->getEventsManager();
-	_ADD_LISTENER(objEventsManager, UIStringValueChange);
+	_ADD_LISTENER(objEventsManager, UIValueChange);
 
 	RZUF3_EventsManager* eventsManager = g_scene->getEventsManager();
 	_ADD_LISTENER_CL(eventsManager, MathExpressionError, User);
@@ -25,7 +25,7 @@ void ExpressionInput::init()
 void ExpressionInput::deinit()
 {
 	RZUF3_EventsManager* objEventsManager = m_object->getEventsManager();
-	_REMOVE_LISTENER(objEventsManager, UIStringValueChange);
+	_REMOVE_LISTENER(objEventsManager, UIValueChange);
 
 	RZUF3_EventsManager* eventsManager = g_scene->getEventsManager();
 	_REMOVE_LISTENER_CL(eventsManager, MathExpressionError, User);
@@ -33,9 +33,12 @@ void ExpressionInput::deinit()
 	removeTextInput();
 }
 
-void ExpressionInput::onUIStringValueChange(RZUF3_UIStringValueChangeEvent* event)
+void ExpressionInput::onUIValueChange(RZUF3_UIValueChangeEvent* event)
 {
-	User_SetMathExpressionEvent objEvent(event->getValue());
+	if(event->getTypeIndex() != typeid(std::string)) return;
+	std::string value = *(std::string*)event->getValue();
+
+	User_SetMathExpressionEvent objEvent(value);
 	g_scene->getEventsManager()->dispatchEvent(&objEvent);
 }
 

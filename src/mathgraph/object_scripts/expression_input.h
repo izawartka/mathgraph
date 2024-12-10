@@ -11,7 +11,7 @@ public:
 	void deinit();
 
 protected:
-	void onUIStringValueChange(RZUF3_UIStringValueChangeEvent* event);
+	void onUIValueChange(RZUF3_UIValueChangeEvent* event);
 	void onMathExpressionError(User_MathExpressionErrorEvent* event);
 
 	void removeTextInput();
@@ -20,6 +20,6 @@ protected:
 
 	RZUF3_TextInput* m_textInput = nullptr;
 
-	_DECLARE_LISTENER(UIStringValueChange)
+	_DECLARE_LISTENER(UIValueChange)
 	_DECLARE_LISTENER(MathExpressionError)
 };

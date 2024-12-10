@@ -15,7 +15,7 @@ RZUF3_SceneDefinition* SettingsScene::getSceneDef()
     objUIRoot.name = "ui_root";
     m_sceneDef->objects.push_back(objUIRoot);
 
-    // settings button //
+    // back button //
     RZUF3_TextButtonOptions backButtonOptions;
     backButtonOptions.text = "settings_back";
     backButtonOptions.useLangFile = true;

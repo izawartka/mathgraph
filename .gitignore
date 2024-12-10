@@ -41,3 +41,4 @@ bin/mathgraph
 bin/*.ilk
 bin/*.pdb
 bin/*.zip
+bin/config.txt

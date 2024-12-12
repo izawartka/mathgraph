@@ -1,4 +1,16 @@
 window_title = MathGraph
 equation_label = y=
-settings = Ustawienia
-settings_back = Powrót
+settings_btn = Ustawienia
+back_btn = Powrót
+settings_title = Ustawienia
+show_grid_label = Pokaż siatkę
+show_point_label = Pokaż punkt
+x_scale_label = Skala osi X:
+y_scale_label = Skala osi Y:
+scale_opt_decimal = Dziesiętna
+scale_opt_log = Logarytmiczna
+scale_opt_pi_based = Oparta na π
+lang_label = Język:
+lang_opt_en = Angielski
+lang_opt_pl = Polski
+save_btn = Zapisz

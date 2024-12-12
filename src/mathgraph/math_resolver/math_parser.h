@@ -19,7 +19,6 @@ private:
 	static int findNextNonSpaceCharIndex(std::string str, int start);
 	static int findFunctionName(std::string str, const MathFunctionsItem** foundFunction = nullptr);
 	static bool isStringNumber(std::string str);
-	static bool isCharNumber(char c);
 	static int findInnerStringLength(std::string str, int start);
 	static void addSeparationCharToString(std::string& str, int startIndex, int length, char separationChar, bool skipLast = true);
 };

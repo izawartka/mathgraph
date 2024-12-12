@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 
     game = new RZUF3_Game();
     game->addConfigFile(g_defaultConfigDef);
-    game->loadLanguageFromConfigFile("assets/", "lang");
+    game->setLanguageFromConfigFile("assets/", "lang");
     game->initWindow(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT, false);
     game->setWindowTitle("window_title", true);
     game->setWindowIcon("assets/icon.png");
@@ -21,10 +21,6 @@ int main(int argc, char* argv[]) {
     RZUF3_SceneDefinition* sceneDef = MainScene::getSceneDef();
 
     game->setScene(sceneDef);
-#ifdef _DEBUG 
-    // reload the scene to ensure all ObjectScripts are deinitialized correctly
-    game->setScene(sceneDef);
-#endif
     game->startGameLoop();
 
     delete game;

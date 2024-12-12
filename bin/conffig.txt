@@ -1,0 +1,5 @@
+lang=lang_en.txt
+show_grid=true
+show_point=true
+x_scale=decimal
+y_scale=decimal

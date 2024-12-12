@@ -19,6 +19,7 @@ void MathGraph::init()
 	createTextures(m_options.rect.w, m_options.rect.h);
 	createText();
 	setExpression(m_options.expression);
+	createClickable();
 
 	RZUF3_EventsManager* eventsManager = g_scene->getEventsManager();
 	_ADD_LISTENER(eventsManager, Draw);
@@ -42,6 +43,7 @@ void MathGraph::deinit()
 	removeExpression();
 	removeTextures();
 	removeText();
+	removeClickable();
 }
 
 bool MathGraph::setExpression(std::string expressionStr)
@@ -49,22 +51,24 @@ bool MathGraph::setExpression(std::string expressionStr)
 	removeExpression();
 	m_lineTextureNeedsUpdate = true;
 
-	MathExpression* expression = new MathExpression;
-	MathError* error = new MathError;
+	m_expression = new MathExpression;
+	m_error = new MathError;
 
-	MathParser::parseExpression(expressionStr, *expression, *error);
+	MathParser::parseExpression(expressionStr, *m_expression, *m_error);
 
-	MathErrorType errorType = error->type;
+	MathErrorType errorType = m_error->type;
 	if (errorType)
 	{
 		spdlog::warn("Error while parsing expression. Code: {}", (int)errorType);
-		m_error = error;
-		delete expression;
+		delete m_expression;
+		m_expression = nullptr;
 	}
 	else {
 		spdlog::info("Expression parsed successfully");
-		m_expression = expression;
-		delete error;
+		delete m_error;
+		m_error = nullptr;
+
+		// MathParser::debugPrintExpression(*m_expression);
 
 		int varCount = m_expression->variables.size();
 		if (varCount > 1 || varCount == 1 && m_expression->variables[0] != "x") {
@@ -91,6 +95,8 @@ void MathGraph::setRect(SDL_Rect rect)
 	createTextures(rect.w, rect.h);
 	m_lineTextureNeedsUpdate = true;
 	m_helpersTextureNeedsUpdate = true;
+
+	if(m_clickable) m_clickable->setRect(rect);
 }
 
 void MathGraph::setPosZoom(RZUF3_RectD posZoom)
@@ -98,6 +104,31 @@ void MathGraph::setPosZoom(RZUF3_RectD posZoom)
 	m_options.posZoom = posZoom;
 	m_lineTextureNeedsUpdate = true;
 	m_helpersTextureNeedsUpdate = true;
+}
+
+void MathGraph::setXAxisScale(MathGraphAxisScale scale)
+{
+	m_options.xAxisScale = scale;
+	m_helpersTextureNeedsUpdate = true;
+	m_lineTextureNeedsUpdate = true;
+}
+
+void MathGraph::setYAxisScale(MathGraphAxisScale scale)
+{
+	m_options.yAxisScale = scale;
+	m_helpersTextureNeedsUpdate = true;
+	m_lineTextureNeedsUpdate = true;
+}
+
+void MathGraph::setShowGrid(bool showGrid)
+{
+	m_options.showGrid = showGrid;
+	m_helpersTextureNeedsUpdate = true;
+}
+
+void MathGraph::setShowPoint(bool showPoint)
+{
+	m_options.showPoint = showPoint;
 }
 
 void MathGraph::onDraw(RZUF3_DrawEvent* event)
@@ -114,6 +145,8 @@ void MathGraph::onDraw(RZUF3_DrawEvent* event)
 
 	g_renderer->setAlign(RZUF3_Align_TopLeft);
 	g_renderer->drawTexture(m_object, m_lineTexture, nullptr, m_options.rect);
+
+	drawPoint();
 }
 
 void MathGraph::onSetMathExpression(User_SetMathExpressionEvent* event)
@@ -188,28 +221,32 @@ void MathGraph::updateHelpersTexture()
 
 	double gridSpacingX = m_options.gridSpacing * m_options.posZoom.w;
 	while(gridSpacingX < m_options.gridSpacingZoomOutThreshold) gridSpacingX *= m_options.gridSpacingZoomOutFactor;
-	double gridStartX = std::fmod(m_options.posZoom.x * m_options.posZoom.w, gridSpacingX);
-	int gridCountX = m_options.rect.w / gridSpacingX + 1;
-
-	for (int i = -gridCountX; i <= gridCountX; i++)
-	{
-		int x = std::round(centerX + gridStartX + i * gridSpacingX);
-
-		if (x == axisYX) continue;
-		if (x >= 0 && x < m_options.rect.w) SDL_RenderDrawLine(renderer, x, 0, x, m_options.rect.h);
-	}
 
 	double gridSpacingY = m_options.gridSpacing * m_options.posZoom.h;
-	while(gridSpacingY < m_options.gridSpacingZoomOutThreshold) gridSpacingY *= m_options.gridSpacingZoomOutFactor;
-	double gridStartY = std::fmod(m_options.posZoom.y * m_options.posZoom.h, gridSpacingY);
-	int gridCountY = m_options.rect.h / gridSpacingY + 1;
+	while (gridSpacingY < m_options.gridSpacingZoomOutThreshold) gridSpacingY *= m_options.gridSpacingZoomOutFactor;
 
-	for (int i = -gridCountY; i <= gridCountY; i++)
-	{
-		int y = std::round(centerY + gridStartY + i * gridSpacingY);
+	if (m_options.showGrid) {
+		double gridStartX = std::fmod(m_options.posZoom.x * m_options.posZoom.w, gridSpacingX);
+		int gridCountX = m_options.rect.w / gridSpacingX + 1;
 
-		if (y == axisXY) continue;
-		if (y >= 0 && y < m_options.rect.h) SDL_RenderDrawLine(renderer, 0, y, m_options.rect.w, y);
+		for (int i = -gridCountX; i <= gridCountX; i++)
+		{
+			int x = std::round(centerX + gridStartX + i * gridSpacingX);
+
+			if (x == axisYX) continue;
+			if (x >= 0 && x < m_options.rect.w) SDL_RenderDrawLine(renderer, x, 0, x, m_options.rect.h);
+		}
+
+		double gridStartY = std::fmod(m_options.posZoom.y * m_options.posZoom.h, gridSpacingY);
+		int gridCountY = m_options.rect.h / gridSpacingY + 1;
+
+		for (int i = -gridCountY; i <= gridCountY; i++)
+		{
+			int y = std::round(centerY + gridStartY + i * gridSpacingY);
+
+			if (y == axisXY) continue;
+			if (y >= 0 && y < m_options.rect.h) SDL_RenderDrawLine(renderer, 0, y, m_options.rect.w, y);
+		}
 	}
 
 	SDL_SetRenderDrawColor(renderer, m_options.axisColor.r, m_options.axisColor.g, m_options.axisColor.b, m_options.axisColor.a);
@@ -223,7 +260,7 @@ void MathGraph::updateHelpersTexture()
 		int markerXX = std::round(axisYX + gridSpacingX);
 		SDL_RenderDrawLine(renderer, markerXX, markerXStartY, markerXX, markerXEndY);
 
-		std::string markerXText = doubleToShortString(gridSpacingX / m_options.posZoom.w);
+		std::string markerXText = getMarkerText(true, gridSpacingX / m_options.posZoom.w);
 		int markerTextXY = std::round(axisXY + m_options.markerTextOffset);
 
 		m_markerTextX->setText(markerXText);
@@ -239,7 +276,7 @@ void MathGraph::updateHelpersTexture()
 		int markerYY = std::round(axisXY - gridSpacingY);
 		SDL_RenderDrawLine(renderer, markerYStartX, markerYY, markerYEndX, markerYY);
 
-		std::string markerYText = doubleToShortString(gridSpacingY / m_options.posZoom.h);
+		std::string markerYText = getMarkerText(false, gridSpacingY / m_options.posZoom.h);
 		int markerTextYX = std::round(axisYX - m_options.markerTextOffset);
 
 		m_markerTextY->setText(markerYText);
@@ -292,19 +329,15 @@ void MathGraph::updateLineTexture()
 			if (i >= m_options.rect.w) break;
 		}
 
-		double input = (i - centerX) / m_options.posZoom.w - m_options.posZoom.x;
-
-		double value;
-		MathError error;
-		MathSolver::solveExpression(*m_expression, { input }, value, error);
-
-		if (error.type != NO_ERROR) {
+		double valueX, valueY, x, y;
+		x = i;
+		posToValueX(x, valueX);
+		if (!solveForX(valueX, valueY)) {
 			lastIsError = true;
 			continue;
 		}
+		valueToPosY(valueY, y);
 
-		double x = i;
-		double y = centerY + (m_options.posZoom.y - value) * m_options.posZoom.h;
 		if (y < 0) y = -1;
 		if (y >= m_options.rect.h) y = m_options.rect.h;
 
@@ -324,31 +357,6 @@ void MathGraph::updateLineTexture()
 	SDL_SetRenderTarget(renderer, nullptr);
 }
 
-void MathGraph::createText()
-{
-	RZUF3_TextRendererOptions options;
-	options.text = "";
-	options.useOnDraw = false;
-	options.useLangFile = false;
-	options.style.bgColor = m_options.bgColor;
-	options.style.color = m_options.markerTextColor;
-	options.style.size = m_options.markerTextSize;
-	options.style.style = m_options.markerTextStyle;
-	options.style.fontFilepath = m_options.textFontFilepath;
-
-	options.alignment = RZUF3_Align_Top;
-	if (m_markerTextX == nullptr) {
-		m_markerTextX = new RZUF3_TextRenderer(options);
-		m_object->addScript(m_markerTextX);
-	}
-
-	options.alignment = RZUF3_Align_Right;
-	if (m_markerTextY == nullptr) {
-		m_markerTextY = new RZUF3_TextRenderer(options);
-		m_object->addScript(m_markerTextY);
-	}
-}
-
 void MathGraph::removeText()
 {
 	if (m_markerTextX != nullptr) {
@@ -362,12 +370,159 @@ void MathGraph::removeText()
 		delete m_markerTextY;
 		m_markerTextY = nullptr;
 	}
+
+	if (m_pointText != nullptr) {
+		m_object->removeScript(m_pointText);
+		delete m_pointText;
+		m_pointText = nullptr;
+	}
 }
 
-std::string MathGraph::doubleToShortString(double value)
+void MathGraph::createText()
+{
+	RZUF3_TextRendererOptions options;
+	options.text = "";
+	options.useOnDraw = false;
+	options.useLangFile = false;
+	options.style = m_options.markerTextStyle;
+
+	if (m_markerTextX == nullptr) {
+		options.alignment = RZUF3_Align_Top;
+		m_markerTextX = new RZUF3_TextRenderer(options);
+		m_object->addScript(m_markerTextX);
+	}
+
+	if (m_markerTextY == nullptr) {
+		options.alignment = RZUF3_Align_Right;
+		m_markerTextY = new RZUF3_TextRenderer(options);
+		m_object->addScript(m_markerTextY);
+	}
+
+	if (m_pointText == nullptr) {
+		options.style = m_options.pointTextStyle;
+		options.alignment = RZUF3_Align_Bottom;
+		m_pointText = new RZUF3_TextRenderer(options);
+		m_object->addScript(m_pointText);
+	}
+}
+
+void MathGraph::removeClickable()
+{
+	if (m_clickable == nullptr) return;
+
+	RZUF3_Object* clickableObject = m_clickable->getObject();
+	g_scene->removeObject(clickableObject->getName());
+
+	delete m_clickable;
+	m_clickable = nullptr;
+}
+
+void MathGraph::createClickable()
+{
+	if (m_clickable != nullptr) return;
+
+	RZUF3_ClickableOptions options;
+	options.alignment = RZUF3_Align_TopLeft;
+	options.useOnHoverCursor = false;
+	options.useOnSetRect = false;
+	options.rect = m_options.rect;
+
+	m_clickable = new RZUF3_Clickable(options);
+
+	RZUF3_ObjectDefinition objectDef;
+	objectDef.name = m_object->getName() + "_clickable";
+	objectDef.pos = { 0, 0 };
+	objectDef.scripts = { m_clickable };
+
+	RZUF3_Object* object = g_scene->addObject(objectDef);
+
+	object->setParent(m_object);
+	object->init();
+}
+
+void MathGraph::drawPoint()
+{
+	if (!m_clickable || !m_clickable->isInside()) return;
+	if (!m_options.showPoint) return;
+
+	int x, y;
+	m_clickable->getLastMousePos(x, y);
+
+	double posX, valueX, valueY, posY;
+	posX = x;
+	posToValueX(posX, valueX);
+	if (!solveForX(valueX, valueY)) return;
+	valueToPosY(valueY, posY);
+	if(posY < 0 || posY >= m_options.rect.h || isnan(posY)) return;
+
+	posX += m_options.rect.x;
+	posY += m_options.rect.y;
+
+	m_pointText->setText("(" + doubleToShortString(valueX) + ", " + doubleToShortString(valueY) + ")");
+	m_pointText->setDstPos(posX, posY - m_options.pointTextOffset);
+	m_pointText->draw();
+
+	SDL_Rect pointRect = { posX, posY, m_options.pointSize, m_options.pointSize };
+
+	g_renderer->setAlign(RZUF3_Align_Center);
+	g_renderer->setColor(m_options.pointColor);
+	g_renderer->fillCircle(m_object, pointRect);
+}
+
+void MathGraph::posToValueX(double posX, double& valueX) const
+{
+	double centerX = m_options.rect.w / 2.0;
+
+	double input = (posX - centerX) / m_options.posZoom.w - m_options.posZoom.x;
+	if (m_options.xAxisScale == MathGraphAxisScale::Logarithmic) input = std::pow(10, input);
+	else if (m_options.xAxisScale == MathGraphAxisScale::PiBased) input = input * M_PI;
+
+	valueX = input;
+}
+
+bool MathGraph::solveForX(double valueX, double& valueY)
+{
+	if (m_expression == nullptr) return false;
+
+	MathError error;
+	MathSolver::solveExpression(*m_expression, { valueX }, valueY, error);
+
+	return error.type == NO_ERROR;
+}
+
+void MathGraph::valueToPosY(double value, double& posY) const
+{
+	double centerY = m_options.rect.h / 2.0;
+
+	if (m_options.yAxisScale == MathGraphAxisScale::Logarithmic) value = std::log10(value);
+	else if (m_options.yAxisScale == MathGraphAxisScale::PiBased) value = value / M_PI;
+
+	posY = centerY + (m_options.posZoom.y - value) * m_options.posZoom.h;
+}
+
+std::string MathGraph::getMarkerText(bool isX, double coef)
+{
+	MathGraphAxisScale scale = isX ? m_options.xAxisScale : m_options.yAxisScale;
+	std::string text;
+
+	switch (scale) {
+	case MathGraphAxisScale::Decimal:
+		return doubleToShortString(coef);
+	case MathGraphAxisScale::Logarithmic:
+		return "10^" + doubleToShortString(coef);
+	case MathGraphAxisScale::PiBased:
+		return doubleToShortString(coef) + "\xCF\x80";
+	default:
+		return "";
+	}
+}
+
+std::string MathGraph::doubleToShortString(double value, size_t maxDecimals)
 {
 	std::string result = std::to_string(value);
-	result.erase(result.find_last_not_of('0') + 1, std::string::npos);
+	size_t decimalPos = result.find('.');
+	size_t pos = std::min(result.find_last_not_of('0') + 1, decimalPos + maxDecimals + 1);
+	result.erase(pos, std::string::npos);
 	if (!result.empty() && result.back() == '.') {
 		result.pop_back();
 	}

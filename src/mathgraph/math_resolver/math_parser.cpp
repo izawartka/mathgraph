@@ -338,7 +338,7 @@ bool MathParser::parseSpecial(std::string strExpression, MathExpression& outExpr
 	const MathFunctionsItem* foundFunction;
 	int functionNameIndex = findFunctionName(strExpression, &foundFunction);
 
-	if(foundFunction == nullptr || functionNameIndex == -1) {
+	if(foundFunction == nullptr || functionNameIndex != 0) {
 		error.type = UNKNOWN_SYMBOL;
 		error.position = 0;
 		return false;

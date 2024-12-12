@@ -17,7 +17,7 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
 
     // equation label //
     RZUF3_TextRendererOptions equationLabelOptions;
-    equationLabelOptions.style.fontFilepath = "assets/fonts/roboto-regular.ttf";
+    equationLabelOptions.style.fontFilepath = MAIN_FONT;
     equationLabelOptions.text = "equation_label";
     equationLabelOptions.useLangFile = true;
     equationLabelOptions.alignment = RZUF3_Align_TopRight;
@@ -36,7 +36,7 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
     objEquationPrompt.name = "equation_prompt";
     objEquationPrompt.parentName = "ui_root";
     objEquationPrompt.scripts = {
-        new ExpressionInput(),
+        new ExpressionInput(DEFAULT_EXPRESSION),
         new RZUF3_WindowRectAnchor(RZUF3_WindowRectAnchorOptions{{
             {0.0, 0.0, 32+4, 16}, 
             {1.0, 0.0, -16, 16}
@@ -46,8 +46,8 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
 
     // graph //
     MathGraphOptions graphOptions;
-    graphOptions.expression = "x^2";
-    graphOptions.textFontFilepath = "assets/fonts/roboto-regular.ttf";
+    graphOptions.expression = DEFAULT_EXPRESSION;
+    graphOptions.setFontFilepath(MAIN_FONT);
 
     RZUF3_DraggableOptions graphDraggableOptions;
     graphDraggableOptions.centerFix = false;
@@ -57,10 +57,13 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
     graphDraggableOptions.minScale = 0.1;
     graphDraggableOptions.initialScale = 50.0;
 
+    MathGraph* mathGraph = new MathGraph(graphOptions);
+
     RZUF3_ObjectDefinition objGraph;
     objGraph.name = "graph";
     objGraph.scripts = {
-        new MathGraph(graphOptions),
+        mathGraph,
+        new GraphConfigSync(MAIN_CONFIG, mathGraph),
         new RZUF3_Draggable(graphDraggableOptions),
         new RZUF3_WindowRectAnchor(RZUF3_WindowRectAnchorOptions{{
             {0.0, 0.0, 16, 58},
@@ -70,20 +73,13 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
     m_sceneDef->objects.push_back(objGraph);
 
     // settings button //
-    RZUF3_TextButtonOptions settingsButtonOptions;
-    settingsButtonOptions.text = "settings";
-    settingsButtonOptions.useLangFile = true;
-    settingsButtonOptions.alignment = RZUF3_Align_BottomLeft;
-    settingsButtonOptions.styles[0].horizontalPadding = 16;
-    settingsButtonOptions.styles[0].textStyle.fontFilepath = "assets/fonts/roboto-regular.ttf";
-
     RZUF3_ObjectDefinition objSettingsButton;
-    objSettingsButton.name = "settings_button";
+    objSettingsButton.name = "settings_btn";
     objSettingsButton.parentName = "ui_root";
     objSettingsButton.scripts = {
-        new RZUF3_TextButton(settingsButtonOptions),
+        new RZUF3_TextButton(MAIN_FONT, "settings_btn"),
         new SceneSwitchButton(SettingsScene::getSceneDef()),
-        new RZUF3_WindowAnchor({0, 1, 16, -16})
+        new RZUF3_WindowAnchor({0, 1, 16, -27-16})
 	};
     m_sceneDef->objects.push_back(objSettingsButton);
 
@@ -92,7 +88,7 @@ RZUF3_SceneDefinition* MainScene::getSceneDef()
 	objAuthor.name = "author";
 
     RZUF3_TextRendererOptions authorOptions;
-    authorOptions.style.fontFilepath = "assets/fonts/roboto-regular.ttf";
+    authorOptions.style.fontFilepath = MAIN_FONT;
     authorOptions.text = "izawartka 2024.11";
     authorOptions.useLangFile = false;
     authorOptions.alignment = RZUF3_Align_BottomRight;

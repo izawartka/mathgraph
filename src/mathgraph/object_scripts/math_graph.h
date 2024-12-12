@@ -4,6 +4,12 @@
 
 class User_SetMathExpressionEvent;
 
+enum class MathGraphAxisScale {
+	Decimal,
+	Logarithmic,
+	PiBased
+};
+
 struct MathGraphOptions {
 	std::string expression;
 	RZUF3_RectD posZoom = { 0.0, 0.0, 1.0, 1.0 };
@@ -11,16 +17,31 @@ struct MathGraphOptions {
 	SDL_Color bgColor = { 0, 0, 0, 0 };
 	SDL_Color lineColor = { 255, 255, 255, 255 };
 	SDL_Color axisColor = { 200, 128, 128, 255 };
-	SDL_Color markerTextColor = { 200, 128, 128, 255 };
 	SDL_Color gridColor = { 40, 40, 40, 255 };
+	SDL_Color pointColor = { 255, 255, 255, 255 };
 	double gridSpacing = 0.1;
 	int gridSpacingZoomOutFactor = 10;
 	int gridSpacingZoomOutThreshold = 20;
-	std::string textFontFilepath;
-	int markerTextSize = 16;
-	int markerTextStyle = TTF_STYLE_NORMAL;
-	int markerTextOffset = 8;
+	RZUF3_TextRendererStyle markerTextStyle;
+	RZUF3_TextRendererStyle pointTextStyle;
+	int pointSize = 8;
+	int pointTextOffset = 8;
 	int markerSize = 8;
+	int markerTextOffset = 8;
+	MathGraphAxisScale xAxisScale = MathGraphAxisScale::Decimal;
+	MathGraphAxisScale yAxisScale = MathGraphAxisScale::Decimal;
+	bool showGrid = true;
+	bool showPoint = true;
+
+	MathGraphOptions() {
+		markerTextStyle.color = axisColor;
+		pointTextStyle.color = pointColor;
+	}
+
+	void setFontFilepath(std::string filepath) {
+		markerTextStyle.fontFilepath = filepath;
+		pointTextStyle.fontFilepath = filepath;
+	}
 };
 
 class MathGraph : public RZUF3_ObjectScript {
@@ -34,6 +55,10 @@ public:
 	bool setExpression(std::string expression);
 	void setRect(SDL_Rect rect);
 	void setPosZoom(RZUF3_RectD posZoom);
+	void setXAxisScale(MathGraphAxisScale scale);
+	void setYAxisScale(MathGraphAxisScale scale);
+	void setShowGrid(bool showGrid);
+	void setShowPoint(bool showPoint);
 
 	MathError* getError() { return m_error; }
 
@@ -48,10 +73,17 @@ protected:
 	void createTextures(int width, int height);
 	void updateHelpersTexture();
 	void updateLineTexture();
-	void createText();
 	void removeText();
+	void createText();
+	void removeClickable();
+	void createClickable();
+	void drawPoint();
 
-	std::string doubleToShortString(double value);
+	std::string getMarkerText(bool isX, double coef);
+	std::string doubleToShortString(double value, size_t maxDecimals = 3);
+	void posToValueX(double posX, double& valueX) const;
+	bool solveForX(double valueX, double& valueY);
+	void valueToPosY(double valueY, double& posY) const;
 
 	MathGraphOptions mp_options;
 
@@ -64,6 +96,8 @@ protected:
 	bool m_lineTextureNeedsUpdate = false;
 	RZUF3_TextRenderer* m_markerTextX = nullptr;
 	RZUF3_TextRenderer* m_markerTextY = nullptr;
+	RZUF3_TextRenderer* m_pointText = nullptr;
+	RZUF3_Clickable* m_clickable = nullptr;
 
 	_DECLARE_LISTENER(Draw)
 	_DECLARE_LISTENER(SetMathExpression)

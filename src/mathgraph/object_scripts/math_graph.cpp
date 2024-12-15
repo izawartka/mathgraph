@@ -496,7 +496,7 @@ void MathGraph::posToValueXY(double posX, double posY, double& valueX, double& v
 	double centerY = m_options.rect.h / 2.0;
 
 	double inputX = (posX - centerX) / m_options.posZoom.w - m_options.posZoom.x;
-	double inputY = (centerY - posY) / m_options.posZoom.h - m_options.posZoom.y;
+	double inputY = (centerY - posY) / m_options.posZoom.h + m_options.posZoom.y;
 
 	if (m_options.xAxisScale == MathGraphAxisScale::Logarithmic) inputX = std::pow(10, inputX);
 	else if (m_options.xAxisScale == MathGraphAxisScale::PiBased) inputX = inputX * M_PI;

@@ -32,6 +32,7 @@ struct MathGraphOptions {
 	MathGraphAxisScale yAxisScale = MathGraphAxisScale::Decimal;
 	bool showGrid = true;
 	bool showPoint = true;
+	int pointMaxDistance = 40;
 
 	MathGraphOptions() {
 		markerTextStyle.color = axisColor;
@@ -43,6 +44,11 @@ struct MathGraphOptions {
 		pointTextStyle.fontFilepath = filepath;
 	}
 };
+
+static struct MathGraphPoint {
+	double x;
+	double y;
+} mathGraphPoint;
 
 class MathGraph : public RZUF3_ObjectScript {
 public:
@@ -82,8 +88,11 @@ protected:
 	std::string getMarkerText(bool isX, double coef);
 	std::string doubleToShortString(double value, size_t maxDecimals = 3);
 	void posToValueX(double posX, double& valueX) const;
+	void posToValueXY(double posX, double posY, double& valueX, double& valueY) const;
 	bool solveForX(double valueX, double& valueY);
 	void valueToPosY(double valueY, double& posY) const;
+	void valueToPosXY(double valueX, double valueY, double& posX, double& posY) const;
+	MathGraphPoint getClosestCachedPoint(double x, double y);
 
 	MathGraphOptions mp_options;
 
@@ -98,6 +107,8 @@ protected:
 	RZUF3_TextRenderer* m_markerTextY = nullptr;
 	RZUF3_TextRenderer* m_pointText = nullptr;
 	RZUF3_Clickable* m_clickable = nullptr;
+	MathGraphPoint* m_cachedPoints = nullptr;
+	int m_cachedPointsCount = 0;
 
 	_DECLARE_LISTENER(Draw)
 	_DECLARE_LISTENER(SetMathExpression)

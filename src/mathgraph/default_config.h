@@ -9,8 +9,8 @@ const RZUF3_ConfigFileDef g_defaultConfigDef(
 		{"show_grid", RZUF3_ConfigBoolEntry(true)},
 		{"show_point", RZUF3_ConfigBoolEntry(true)}
 	},
-	MAIN_CONFIG,
-	true,
-	true,
-	true
+	MAIN_CONFIG, // filepath
+	true, // default
+	true, // autosave
+	true // ignoreUnchanged
 );

@@ -4,7 +4,7 @@
 #define WINDOW_MIN_HEIGHT 600
 
 #define MAIN_FONT "assets/fonts/roboto-regular.ttf"
-#define MAIN_CONFIG "conffig.txt"
+#define MAIN_CONFIG "config.txt"
 
 #define DEFAULT_EXPRESSION "x^2"
 

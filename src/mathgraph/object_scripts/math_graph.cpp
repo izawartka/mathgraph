@@ -168,9 +168,11 @@ void MathGraph::removeExpression()
 {
 	if(m_expression != nullptr) delete m_expression;
 	if(m_error != nullptr) delete m_error;
+	if(m_cachedPoints != nullptr) delete m_cachedPoints;
 
 	m_expression = nullptr;
 	m_error = nullptr;
+	m_cachedPoints = nullptr;
 	m_lineTextureNeedsUpdate = true;
 
 	m_options.expression = "";
@@ -308,8 +310,11 @@ void MathGraph::updateLineTexture()
 	SDL_SetRenderDrawColor(renderer, m_options.lineColor.r, m_options.lineColor.g, m_options.lineColor.b, m_options.lineColor.a);
 	SDL_SetRenderTarget(renderer, m_lineTexture);
 
+	if(m_cachedPoints != nullptr) delete m_cachedPoints;
+	m_cachedPoints = new MathGraphPoint[m_options.rect.w];
+	m_cachedPointsCount = 0;
 	SDL_Point* points = new SDL_Point[m_options.rect.w];
-	int pointCount = 0;
+	int pointsCount = 0;
 	double lastY = 0;
 	bool lastInBounds = false;
 	bool lastOk = false;
@@ -319,12 +324,12 @@ void MathGraph::updateLineTexture()
 	{
 		if (!lastOk || i >= m_options.rect.w)
 		{
-			if (pointCount > 1)
+			if (pointsCount > 1)
 			{
-				SDL_RenderDrawLines(renderer, points, pointCount);
+				SDL_RenderDrawLines(renderer, points, pointsCount);
 			}
 
-			pointCount = 0;
+			pointsCount = 0;
 
 			if (i >= m_options.rect.w) break;
 		}
@@ -344,8 +349,9 @@ void MathGraph::updateLineTexture()
 		bool inBounds = (y >= 0 && y < m_options.rect.h);
 		bool ok = inBounds || lastInBounds;
 
-		if (!lastOk && ok && !lastIsError) points[pointCount++] = { (int)x-1, (int)lastY };
-		if (ok) points[pointCount++] = { (int)x, (int)y };
+		if (inBounds) m_cachedPoints[m_cachedPointsCount++] = { valueX, valueY };
+		if (!lastOk && ok && !lastIsError) points[pointsCount++] = { (int)x-1, (int)lastY };
+		if (ok) points[pointsCount++] = { (int)x, (int)y };
 
 		lastY = y;
 		lastInBounds = inBounds;
@@ -444,21 +450,25 @@ void MathGraph::drawPoint()
 {
 	if (!m_clickable || !m_clickable->isInside()) return;
 	if (!m_options.showPoint) return;
+	if (m_cachedPoints == nullptr) return;
 
 	int x, y;
 	m_clickable->getLastMousePos(x, y);
 
-	double posX, valueX, valueY, posY;
-	posX = x;
-	posToValueX(posX, valueX);
-	if (!solveForX(valueX, valueY)) return;
-	valueToPosY(valueY, posY);
-	if(posY < 0 || posY >= m_options.rect.h || isnan(posY)) return;
+	double mouseValX, mouseValY;
+	posToValueXY(x, y, mouseValX, mouseValY);
+
+	MathGraphPoint closestPoint = getClosestCachedPoint(mouseValX, mouseValY);
+
+	double posX, posY;
+	valueToPosXY(closestPoint.x, closestPoint.y, posX, posY);
+
+	if (std::hypot(x - posX, y - posY) > m_options.pointMaxDistance) return;
 
 	posX += m_options.rect.x;
 	posY += m_options.rect.y;
 
-	m_pointText->setText("(" + doubleToShortString(valueX) + ", " + doubleToShortString(valueY) + ")");
+	m_pointText->setText("(" + doubleToShortString(closestPoint.x) + ", " + doubleToShortString(closestPoint.y) + ")");
 	m_pointText->setDstPos(posX, posY - m_options.pointTextOffset);
 	m_pointText->draw();
 
@@ -480,6 +490,24 @@ void MathGraph::posToValueX(double posX, double& valueX) const
 	valueX = input;
 }
 
+void MathGraph::posToValueXY(double posX, double posY, double& valueX, double& valueY) const
+{
+	double centerX = m_options.rect.w / 2.0;
+	double centerY = m_options.rect.h / 2.0;
+
+	double inputX = (posX - centerX) / m_options.posZoom.w - m_options.posZoom.x;
+	double inputY = (centerY - posY) / m_options.posZoom.h - m_options.posZoom.y;
+
+	if (m_options.xAxisScale == MathGraphAxisScale::Logarithmic) inputX = std::pow(10, inputX);
+	else if (m_options.xAxisScale == MathGraphAxisScale::PiBased) inputX = inputX * M_PI;
+
+	if (m_options.yAxisScale == MathGraphAxisScale::Logarithmic) inputY = std::pow(10, inputY);
+	else if (m_options.yAxisScale == MathGraphAxisScale::PiBased) inputY = inputY * M_PI;
+
+	valueX = inputX;
+	valueY = inputY;
+}
+
 bool MathGraph::solveForX(double valueX, double& valueY)
 {
 	if (m_expression == nullptr) return false;
@@ -498,6 +526,41 @@ void MathGraph::valueToPosY(double value, double& posY) const
 	else if (m_options.yAxisScale == MathGraphAxisScale::PiBased) value = value / M_PI;
 
 	posY = centerY + (m_options.posZoom.y - value) * m_options.posZoom.h;
+}
+
+void MathGraph::valueToPosXY(double valueX, double valueY, double& posX, double& posY) const
+{
+	double centerX = m_options.rect.w / 2.0;
+	double centerY = m_options.rect.h / 2.0;
+
+	if (m_options.xAxisScale == MathGraphAxisScale::Logarithmic) valueX = std::log10(valueX);
+	else if (m_options.xAxisScale == MathGraphAxisScale::PiBased) valueX = valueX / M_PI;
+
+	if (m_options.yAxisScale == MathGraphAxisScale::Logarithmic) valueY = std::log10(valueY);
+	else if (m_options.yAxisScale == MathGraphAxisScale::PiBased) valueY = valueY / M_PI;
+
+	posX = centerX + (m_options.posZoom.x + valueX) * m_options.posZoom.w;
+	posY = centerY + (m_options.posZoom.y - valueY) * m_options.posZoom.h;
+}
+
+MathGraphPoint MathGraph::getClosestCachedPoint(double x, double y) {
+	if (!m_cachedPoints) return { NAN, NAN };
+
+	int closestPointIndex = -1;
+	double closestDistSq = -1;
+
+	for (int i = 0; i < m_cachedPointsCount; i++)
+	{
+		MathGraphPoint point = m_cachedPoints[i];
+		double distSq = (point.x - x) * (point.x - x) + (point.y - y) * (point.y - y);
+
+		if (closestPointIndex == -1 || distSq < closestDistSq) {
+			closestPointIndex = i;
+			closestDistSq = distSq;
+		}
+	}
+
+	return m_cachedPoints[closestPointIndex];
 }
 
 std::string MathGraph::getMarkerText(bool isX, double coef)

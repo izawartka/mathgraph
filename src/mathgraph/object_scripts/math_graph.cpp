@@ -463,6 +463,7 @@ void MathGraph::drawPoint()
 	double posX, posY;
 	valueToPosXY(closestPoint.x, closestPoint.y, posX, posY);
 
+	if(isnan(posX) || isnan(posY)) return;
 	if (std::hypot(x - posX, y - posY) > m_options.pointMaxDistance) return;
 
 	posX += m_options.rect.x;

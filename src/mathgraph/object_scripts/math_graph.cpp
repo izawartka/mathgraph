@@ -350,8 +350,8 @@ void MathGraph::updateLineTexture()
 		bool ok = inBounds || lastInBounds;
 
 		if (inBounds) m_cachedPoints[m_cachedPointsCount++] = { valueX, valueY };
-		if (!lastOk && ok && !lastIsError) points[pointsCount++] = { (int)x-1, (int)lastY };
-		if (ok) points[pointsCount++] = { (int)x, (int)y };
+		if (!lastOk && ok && !lastIsError) points[pointsCount++] = { (int)(x-0.5), (int)(lastY+0.5) };
+		if (ok) points[pointsCount++] = { (int)(x+0.5), (int)(y+0.5) };
 
 		lastY = y;
 		lastInBounds = inBounds;
@@ -472,7 +472,7 @@ void MathGraph::drawPoint()
 	m_pointText->setDstPos(posX, posY - m_options.pointTextOffset);
 	m_pointText->draw();
 
-	SDL_Rect pointRect = { posX, posY, m_options.pointSize, m_options.pointSize };
+	SDL_Rect pointRect = { (int)(posX+0.5), (int)(posY+0.5), m_options.pointSize, m_options.pointSize };
 
 	g_renderer->setAlign(RZUF3_Align_Center);
 	g_renderer->setColor(m_options.pointColor);

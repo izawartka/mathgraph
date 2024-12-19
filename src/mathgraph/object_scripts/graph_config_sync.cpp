@@ -78,7 +78,7 @@ void GraphConfigSync::updateGraphXAxisScale()
 	if (!m_options.graph) return;
 
 	std::string value;
-	if(!m_configFile->getValue(m_options.xAxisScaleKey, &value)) return;
+	if(!m_configFile->getValue(m_options.xAxisScaleKey, value)) return;
 
 	MathGraphAxisScale xScale = stringToAxisScale(value);
 	m_options.graph->setXAxisScale(xScale);
@@ -90,7 +90,7 @@ void GraphConfigSync::updateGraphYAxisScale()
 	if (!m_options.graph) return;
 
 	std::string value;
-	if(!m_configFile->getValue(m_options.yAxisScaleKey, &value)) return;
+	if(!m_configFile->getValue(m_options.yAxisScaleKey, value)) return;
 
 	MathGraphAxisScale yScale = stringToAxisScale(value);
 	m_options.graph->setYAxisScale(yScale);
@@ -102,7 +102,7 @@ void GraphConfigSync::updateGraphShowGrid()
 	if (!m_options.graph) return;
 
 	bool value;
-	if(!m_configFile->getValue(m_options.showGridKey, &value)) return;
+	if(!m_configFile->getValue(m_options.showGridKey, value)) return;
 
 	m_options.graph->setShowGrid(value);
 }
@@ -113,7 +113,7 @@ void GraphConfigSync::updateGraphShowPoint()
 	if (!m_options.graph) return;
 
 	bool value;
-	if(!m_configFile->getValue(m_options.showPointKey, &value)) return;
+	if(!m_configFile->getValue(m_options.showPointKey, value)) return;
 
 	m_options.graph->setShowPoint(value);
 }

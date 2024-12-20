@@ -38,7 +38,7 @@ RZUF3 requires the following libraries: `SDL2`, `SDL2_image`, `SDL2_ttf` (min. >
    `sudo apt install git cmake gcc ninja-build libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libspdlog-dev -y`
 
 2. Clone the repo:  
-   `git clone https://github.com/izawartka/mathgraph`.
+   `git clone --recurse-submodules https://github.com/izawartka/mathgraph`.
 
 3. Navigate to the directory:  
    `cd mathgraph`.

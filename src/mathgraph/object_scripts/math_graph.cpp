@@ -168,7 +168,7 @@ void MathGraph::removeExpression()
 {
 	if(m_expression != nullptr) delete m_expression;
 	if(m_error != nullptr) delete m_error;
-	if(m_cachedPoints != nullptr) delete m_cachedPoints;
+	if(m_cachedPoints != nullptr) delete[] m_cachedPoints;
 
 	m_expression = nullptr;
 	m_error = nullptr;
@@ -311,9 +311,9 @@ void MathGraph::updateLineTexture()
 	SDL_SetRenderTarget(renderer, m_lineTexture);
 
 	if(m_cachedPoints != nullptr) delete m_cachedPoints;
-	m_cachedPoints = new MathGraphPoint[m_options.rect.w];
+	m_cachedPoints = new MathGraphPoint[m_options.rect.w+1];
 	m_cachedPointsCount = 0;
-	SDL_Point* points = new SDL_Point[m_options.rect.w];
+	SDL_Point* points = new SDL_Point[m_options.rect.w+1];
 	int pointsCount = 0;
 	double lastY = 0;
 	bool lastInBounds = false;

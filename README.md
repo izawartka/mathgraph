@@ -24,7 +24,7 @@ RZUF3 requires the following libraries: `SDL2`, `SDL2_image`, `SDL2_ttf` (min. >
    `vcpkg install sdl2 sdl2-image sdl2-ttf spdlog`
 
 3. Clone the repo using the command:  
-    `git clone https://github.com/izawartka/mathgraph`  
+    `git clone --recurse-submodules https://github.com/izawartka/mathgraph`  
     or just download the ZIP archive from the repository page.
 
 4. Ensure that a proper path to the vcpkg toolchain file is set in the `CMakeLists.txt` file. Default is `C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake`.
@@ -35,7 +35,7 @@ RZUF3 requires the following libraries: `SDL2`, `SDL2_image`, `SDL2_ttf` (min. >
 
 ### Linux building
 1. Install the necessary packages. For Debian-based distributions, use the command:  
-   `sudo apt install git cmake gcc ninja-build libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libspdlog-dev -y`
+   `sudo apt install git cmake g++ ninja-build libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libspdlog-dev -y`
 
 2. Clone the repo:  
    `git clone --recurse-submodules https://github.com/izawartka/mathgraph`.

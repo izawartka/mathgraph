@@ -12,7 +12,7 @@ An intuitive graphical calculator leveraging the latest features of the RZUF fra
 You can find the framework repository [here](https://github.com/izawartka/rzuf3).
 
 ### Binaries
-The latest binaries are available in the Releases section on the right. Just download the zip file, extract it, and run `mathgraph.exe`.
+The latest binaries are available in the Releases section on the right. Just download the zip file appropriate for your system (Windows x64 or Linux x64), extract it, and run `mathgraph.exe` (or `mathgraph` if you are on Linux).
 
 ### Dependencies
 RZUF3 requires the following libraries: `SDL2`, `SDL2_image`, `SDL2_ttf` (min. >=2.0.18, recommended >=2.20.0), `spdlog`.
